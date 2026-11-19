@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
+<title>Instamart Earnings Tracker</title>
+<style>
+:root{--bg:#0b1220;--panel:#121d2e;--panel2:#18263a;--text:#edf3fb;--muted:#9fb0c5;--line:#2b3a50;--green:#39d6a0;--red:#ff7777;--blue:#79aaff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#0b1220,#101b2d);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.wrap{max-width:1050px;margin:auto;padding:22px 16px 50px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:clamp(23px,4vw,32px);margin:0}.sub{color:var(--muted);margin-top:5px;font-size:14px}
+.pill{background:#183b35;color:#8df0c9;padding:7px 11px;border-radius:30px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.card,.section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.kpi .label{color:var(--muted);font-size:13px}.kpi .value{font-size:25px;font-weight:750;margin-top:8px}.positive{color:var(--green)}.negative{color:var(--red)}
+.section{margin-top:14px}.section h2{font-size:18px;margin:0 0 14px}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form .fields{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+input{width:100%;background:#0c1625;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;font-size:16px;outline:none}
+input:focus{border-color:var(--blue)}
+button{border:0;border-radius:10px;padding:12px 15px;font-weight:700;cursor:pointer;background:var(--green);color:#06251c}
+button.secondary{background:#26364c;color:var(--text)}button.danger{background:#482b35;color:#ffc2c2}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:9px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);font-weight:600}
+.empty{color:var(--muted);text-align:center;padding:25px}
+.footer{color:var(--muted);font-size:12px;margin-top:15px;line-height:1.6}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.settings{grid-template-columns:1fr}.kpi .value{font-size:22px}}
+@media(max-width:420px){form .fields{grid-template-columns:1fr}.wrap{padding:18px 12px 35px}}
+</style>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/icon-192.png"><meta name="theme-color" content="#101827"><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}let deferredInstallPrompt;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;const b=document.getElementById('installApp');if(b)b.style.display='inline-block';});document.getElementById('installApp')?.addEventListener('click',async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;});</script></head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>Instamart Earnings Tracker</h1><div class="sub">Track your daily earnings, fuel costs, and actual profit — all in one place</div></div>
+    <span class="pill">Mileage default: 60 km/L</span>
+  <button id="installApp" class="secondary" style="display:none;margin-top:10px">Install App</button></div>
+
+  <div class="grid">
+    <div class="card kpi"><div class="label">Total Income</div><div class="value" id="totalIncome">₹0</div></div>
+    <div class="card kpi"><div class="label">Estimated Fuel Cost</div><div class="value" id="totalFuel">₹0</div></div>
+    <div class="card kpi"><div class="label">Total Profit</div><div class="value positive" id="totalProfit">₹0</div></div>
+    <div class="card kpi"><div class="label">Total Distance</div><div class="value" id="totalKm">0 km</div></div>
+    <div class="card kpi"><div class="label">Average Profit per Hour</div><div class="value positive" id="profitPerHour">₹0/hr</div></div>
+  </div>
+
+  <div class="section">
+    <h2>⚙️ Vehicle & Fuel Settings</h2>
+    <div class="settings">
+      <div><label for="mileage">Mileage (km per litre)</label><input id="mileage" type="number" min="1" step="0.1" value="60"></div>
+      <div><label for="price">Petrol Price (₹ / litre)</label><input id="price" type="number" min="0" step="0.01" placeholder="e.g. 106.50"></div>
+    </div>
+    <div class="hint">The default mileage is set to 60 km/L. Enter the current petrol price. If you change the price, fuel expenses for all days will be recalculated using the new price.</div>
+  </div>
+
+  <div class="section">
+    <h2>➕ Add Daily Entry</h2>
+    <form id="entryForm">
+      <div class="fields">
+        <div><label for="date">Date</label><input id="date" type="date" required></div>
+        <div><label for="km">Distance travelled today (km)</label><input id="km" type="number" min="0" step="0.1" placeholder="e.g. 85" required></div>
+        <div><label for="income">Total income today (₹)</label><input id="income" type="number" min="0" step="0.01" placeholder="e.g. 750" required></div>
+        <div><label for="hours">Hours worked / driven today</label><input id="hours" type="number" min="0.01" step="any" placeholder="Enter any duration, e.g. 4, 5, 6 or 4.5" required></div>
+        <div><label for="litres">Petrol filled today (litres)</label><input id="litres" type="number" min="0" step="0.01" placeholder="e.g. 2" value="0"></div>
+      </div>
+      <div class="actions"><button type="submit" id="saveBtn">Save Daily Entry</button><button type="button" class="secondary" id="cancelEdit" hidden>Cancel Edit</button></div>
+      <div class="hint">Enter the actual number of hours you worked or drove that day. Your shift can be different every day: enter 4, 5, 6, 4.5, or any other duration. The litres of petrol you fill are recorded separately. Profit is calculated using distance travelled ÷ mileage × petrol price. Profit per hour = daily profit ÷ working hours. This avoids counting the full amount you paid at the pump as that day’s fuel expense when some fuel remains in the tank.</div>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>📊 Daily Records</h2>
+    <div class="tablewrap"><table><thead><tr><th>Date</th><th>Distance</th><th>Income</th><th>Petrol Filled</th><th>Estimated Fuel Cost</th><th>Profit</th><th>Working Hours</th><th>Profit / Hour</th><th>Actions</th></tr></thead><tbody id="entries"><tr><td colspan="9" class="empty">No entries added yet.</td></tr></tbody></table></div>
+    <div class="actions"><button class="secondary" id="exportBtn">Download CSV</button><button class="danger" id="clearBtn">Clear All Data</button></div>
+  </div>
+  <div class="footer">Your data is stored only in this browser on this device (local storage). It will not automatically sync to another phone or browser. Daily profit = income − estimated petrol cost based on distance travelled. Other expenses such as maintenance, food, and mobile data are not included yet.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const KEY='instamart_tracker_v1';
+let data=JSON.parse(localStorage.getItem(KEY)||'[]'), editing=null;
+const today=new Date(); $('date').value=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2});
+const num=id=>Number($(id).value||0);
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function calc(e){const fuel=(Number(e.km)/Math.max(num('mileage'),0.1))*num('price');return {fuel,profit:Number(e.income)-fuel}}
+function render(){
+ let income=0,fuel=0,km=0,totalHours=0;
+ data.sort((a,b)=>b.date.localeCompare(a.date));
+ $('entries').innerHTML=data.length?'':'<tr><td colspan="9" class="empty">No entries added yet.</td></tr>';
+ data.forEach(e=>{const c=calc(e);income+=Number(e.income);fuel+=c.fuel;km+=Number(e.km);totalHours+=Number(e.hours||0);
+ const tr=document.createElement('tr');
+ [new Date(e.date+'T00:00:00').toLocaleDateString('en-IN'),Number(e.km)+' km',money(e.income),Number(e.litres||0)+' L',money(c.fuel),money(c.profit),Number(e.hours||0)+' hr',Number(e.hours)>0?money(c.profit/Number(e.hours))+'/hr':'—'].forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===5||i===7)td.style.color=c.profit>=0?'var(--green)':'var(--red)';tr.appendChild(td)});
+ const td=document.createElement('td'),edit=document.createElement('button');edit.textContent='Edit';edit.className='secondary';edit.style.padding='7px 9px';edit.onclick=()=>startEdit(e.id);
+ const del=document.createElement('button');del.textContent='Delete';del.className='danger';del.style.padding='7px 9px';del.style.marginLeft='5px';del.onclick=()=>{if(confirm('Delete this daily entry?')){data=data.filter(x=>x.id!==e.id);save()}};
+ td.append(edit,del);tr.appendChild(td);$('entries').appendChild(tr);
+ });
+ const profit=income-fuel;
+ $('totalIncome').textContent=money(income);$('totalFuel').textContent=money(fuel);$('totalProfit').textContent=money(profit);$('totalProfit').className='value '+(profit>=0?'positive':'negative');$('totalKm').textContent=km.toLocaleString('en-IN')+' km';$('profitPerHour').textContent=totalHours>0?money(profit/totalHours)+'/hr':'₹0/hr';$('profitPerHour').className='value '+(profit>=0?'positive':'negative');
+}
+function resetForm(){editing=null;$('entryForm').reset();$('date').value=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);$('litres').value='0';$('hours').value='';$('saveBtn').textContent='Save Daily Entry';$('cancelEdit').hidden=true}
+function startEdit(id){const e=data.find(x=>x.id===id);if(!e)return;editing=id;$('date').value=e.date;$('km').value=e.km;$('income').value=e.income;$('litres').value=e.litres||0;$('hours').value=e.hours||0;$('saveBtn').textContent='Save Changes';$('cancelEdit').hidden=false;window.scrollTo({top:0,behavior:'smooth'})}
+$('entryForm').addEventListener('submit',ev=>{ev.preventDefault();if(num('mileage')<=0){alert('Please enter a valid mileage.');return}if(num('hours')<=0){alert('Please enter working time in hours.');return}if(num('price')<=0){alert('Please enter the petrol price first.');$('price').focus();return}
+ const item={id:editing||String(Date.now()),date:$('date').value,km:num('km'),income:num('income'),litres:num('litres'),hours:num('hours')};
+ if(editing){data=data.map(x=>x.id===editing?item:x)}else{data.push(item)}save();resetForm();
+});
+$('cancelEdit').onclick=resetForm;
+$('mileage').addEventListener('change',render);$('price').addEventListener('change',render);
+$('clearBtn').onclick=()=>{if(confirm('Permanently delete all daily records?')){data=[];save();resetForm()}};
+$('exportBtn').onclick=()=>{const rows=[['Date','Kilometres','Income INR','Working hours','Petrol filled litres','Estimated fuel expense INR','Profit INR','Profit per hour INR'],...data.map(e=>{const c=calc(e);return[e.date,e.km,e.income,e.hours||0,e.litres||0,c.fuel,c.profit,Number(e.hours)>0?c.profit/Number(e.hours):0]})];const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='instamart-earnings.csv';a.click();URL.revokeObjectURL(a.href)};
+render();
+</script>
+</body></html>
